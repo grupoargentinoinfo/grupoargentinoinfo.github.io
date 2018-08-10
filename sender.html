@@ -1,0 +1,154 @@
+<html data-cast-api-enabled="true">
+	<head>
+		<title>Hello World Chrome Sender</title>
+		<style type="text/css">
+			.receiver-list {
+				list-style: none;
+				padding-left: 0px;
+			}
+		</style>
+		<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
+	</head>
+	<body>
+		<div class="receiver-div">
+			<h3>Choose A Receiver</h3>
+			<ul class="receiver-list">
+				<li>Looking for receivers...</li>
+			</ul>
+		</div>
+		<button class="kill" disabled>Kill the Connection</button>
+	</body>
+	<google-cast-launcher></google-cast-launcher>
+
+
+  <a onclick="castNow()" href="#">Cast!</a></br>
+  <a onclick="playVideo()" href="#">PLAY VIDEO!</a></br>
+
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+	<script src="http://underscorejs.org/underscore-min.js"></script>
+
+	<script>
+		var cast_api,
+			cv_activity,
+			receiverList,
+			$killSwitch = $('.kill'),
+			sessionRequest,
+			castSession;
+
+
+		initializeCastApi = function() {
+		  cast.framework.CastContext.getInstance().setOptions({
+		    receiverApplicationId: '2F7DBFF3',
+		    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+		  });
+		  castNow();
+		};
+
+		initializeApi = function() {
+			if (!cast_api) {
+				cast_api = new cast.ApiConfig();
+				debugger;
+				cast_api.addReceiverListener('2F7DBFF3', onReceiverList);
+			}
+		};
+
+		castNow = function() {
+      console.log('casting!')
+		  // var castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+      var sessionRequest = new chrome.cast.SessionRequest('2F7DBFF3', 'MULTIZONE_GROUP', 5000);
+      chrome.cast.requestSession(function onRequestSessionSuccess(session) {
+        console.log('Session success', session)
+        cast.session = session
+      }, function onLaunchError(er) {
+        console.log('onLaunchError', er)
+      }, sessionRequest);
+
+      setTimeout(function() {
+        var sessionRequest = new chrome.cast.SessionRequest('2F7DBFF3');
+        chrome.cast.requestSession(function onRequestSessionSuccess(session) {
+          console.log('Session success', session)
+          cast.session = session
+        }, function onLaunchError(er) {
+          console.log('onLaunchError', er)
+        }, sessionRequest);
+      }, 5000)
+
+    }
+
+    playVideo = function() {
+    	var mediaInfo = new chrome.cast.media.MediaInfo('http://commondatastorage.googleapis.com/gtv-videos-bucket/big_buck_bunny_1080p.mp4', 'video/mp4');
+			var request = new chrome.cast.media.LoadRequest(mediaInfo);
+
+		  castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+		  
+		  debugger;
+			castSession.loadMedia(request).then(
+			  function() { console.log('Load succeed'); },
+			  function(errorCode) { console.log('Error code: ' + errorCode); });
+    }
+
+		onReceiverList = function(list) {
+			if (list.length > 0) {
+				receiverList = list;
+				$('.receiver-list').empty();
+				receiverList.forEach(function(receiver) {
+					$listItem = $('<li><a href="#" data-id="' + receiver.id + '">' + receiver.name + '</a></li>');
+					$listItem.on('click', receiverClicked);
+					$('.receiver-list').append($listItem);
+				});
+			}
+		};
+
+		receiverClicked = function(e) {
+			e.preventDefault();
+
+			var $target = $(e.target),
+				receiver = _.find(receiverList, function(receiver) {
+					return receiver.id === $target.data('id');
+				});
+
+			doLaunch(receiver);
+		};
+
+		doLaunch = function(receiver) {
+			if (!cv_activity) {
+				var request = new cast.LaunchRequest('2F7DBFF3', receiver);
+
+				$killSwitch.prop('disabled', false);
+
+				cast_api.launch(request, onLaunch);
+			}
+		};
+
+		onLaunch = function(activity) {
+			if (activity.status === 'running') {
+				cv_activity = activity;
+				
+				cast_api.sendMessage(cv_activity.activityId, 'Cast Receiver Hello World', {type: 'HelloWorld'});
+			}
+		};
+
+		$killSwitch.on('click', function() {
+			cast_api.stopActivity(cv_activity.activityId, function(){
+				cv_activity = null;
+			
+				$killSwitch.prop('disabled', true);
+			});
+		});
+
+    window['__onGCastApiAvailable'] = function(isAvailable) {
+    	console.log('isAvailable: ' + isAvailable);
+		  if (isAvailable) {
+		    initializeCastApi();
+		  }
+		};
+		window.addEventListener('message', function(event) {
+			if (event.source === window && event.data &&
+					event.data.source === 'CastApi' &&
+					event.data.event === 'Hello') {
+			}
+		});
+
+	</script>
+</html>
