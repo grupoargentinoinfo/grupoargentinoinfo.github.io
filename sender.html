@@ -81,11 +81,13 @@
 			var request = new chrome.cast.media.LoadRequest(mediaInfo);
 
 		  castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-		  
-		  debugger;
-			castSession.loadMedia(request).then(
-			  function() { console.log('Load succeed'); },
-			  function(errorCode) { console.log('Error code: ' + errorCode); });
+			console.log(cast.framework.CastContext.getInstance());  
+		  if(castSession != null)
+		  {
+				castSession.loadMedia(request).then(
+				  function() { console.log('Load succeed'); },
+				  function(errorCode) { console.log('Error code: ' + errorCode); });
+		  }
     }
 
 		onReceiverList = function(list) {
