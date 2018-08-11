@@ -19,7 +19,9 @@
 		</div>
 		<button class="kill" disabled>Kill the Connection</button>
 	</body>
-	<google-cast-launcher></google-cast-launcher>
+	<div style="width: 50px; height: 50px">
+		<google-cast-launcher></google-cast-launcher>
+	</div>
 
 
   <a onclick="castNow()" href="#">Cast!</a></br>
@@ -42,38 +44,41 @@
 		    receiverApplicationId: '2F7DBFF3',
 		    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
 		  });
-		  castNow();
+		  // castNow();
 		};
 
 		initializeApi = function() {
-			if (!cast_api) {
-				cast_api = new cast.ApiConfig();
-				debugger;
-				cast_api.addReceiverListener('2F7DBFF3', onReceiverList);
-			}
+			// if (!cast_api) {
+			// 	cast_api = new cast.ApiConfig();
+			// 	debugger;
+			// 	cast_api.addReceiverListener('2F7DBFF3', onReceiverList);
+			// }
 		};
 
-		castNow = function() {
+		var castNow = function() {
       console.log('casting!')
-		  // var castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-      var sessionRequest = new chrome.cast.SessionRequest('2F7DBFF3', 'MULTIZONE_GROUP', 5000);
-      chrome.cast.requestSession(function onRequestSessionSuccess(session) {
-        console.log('Session success', session)
-        cast.session = session
-      }, function onLaunchError(er) {
-        console.log('onLaunchError', er)
-      }, sessionRequest);
+		  cast.framework.CastContext.getInstance().setOptions({
+		    receiverApplicationId: '2F7DBFF3',
+		    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+		  });
 
-      setTimeout(function() {
-        var sessionRequest = new chrome.cast.SessionRequest('2F7DBFF3');
-        chrome.cast.requestSession(function onRequestSessionSuccess(session) {
-          console.log('Session success', session)
-          cast.session = session
-        }, function onLaunchError(er) {
-          console.log('onLaunchError', er)
-        }, sessionRequest);
-      }, 5000)
+		  var context = cast.framework.CastContext.getInstance();
+			context.addEventListener(
+			  cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+			  function(event) {
+			  	console.log(event.sessionState);
+			    switch (event.sessionState) {
+			      case cast.framework.SessionState.SESSION_STARTED:
+			      case cast.framework.SessionState.SESSION_RESUMED:
+			        break;
+			      case cast.framework.SessionState.SESSION_ENDED:
+			        console.log('CastContext: CastSession disconnected');
+			        // Update locally as necessary
+			        break;
+			    }
+			  })
 
+      
     }
 
     playVideo = function() {
@@ -81,7 +86,7 @@
 			var request = new chrome.cast.media.LoadRequest(mediaInfo);
 
 		  castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-			console.log(cast.framework.CastContext.getInstance());  
+			console.log(castSession);  
 		  if(castSession != null)
 		  {
 				castSession.loadMedia(request).then(
@@ -142,7 +147,7 @@
     window['__onGCastApiAvailable'] = function(isAvailable) {
     	console.log('isAvailable: ' + isAvailable);
 		  if (isAvailable) {
-		    initializeCastApi();
+		    castNow();
 		  }
 		};
 		window.addEventListener('message', function(event) {
