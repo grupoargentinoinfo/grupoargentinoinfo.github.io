@@ -19,11 +19,11 @@
     </div>
 </body>
 <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
-<script src="messageTypes.js"></script>
+<!-- <script src="messageTypes.js"></script> -->
 <script>
     $(function() {
-        var receiver = new cast.receiver.Receiver('2F7DBFF3', ['Cast Receiver Hello World']),
-            channelHandler = new cast.receiver.ChannelHandler('Cast Receiver Hello World'),
+        var receiver = new cast.receiver.Receiver('2F7DBFF3', ['com.grupoargentinoinfo.chromecasthello']),
+            channelHandler = new cast.receiver.ChannelHandler('com.grupoargentinoinfo.chromecasthello'),
             $messages = $('.messages');
 
         var castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
